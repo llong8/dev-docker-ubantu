@@ -9,13 +9,13 @@
 ### 1. 启动服务
 ```bash
 # 构建并启动所有服务
-docker-compose up -d
+docker compose up -d
 
 # 查看服务状态
-docker-compose ps
+docker compose ps
 
 # 查看日志
-docker-compose logs -f
+docker compose logs -f
 ```
 
 ### 2. 连接到服务
