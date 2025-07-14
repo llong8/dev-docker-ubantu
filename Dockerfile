@@ -1,9 +1,9 @@
 # 基础镜像
 FROM ubuntu:24.04
 
-# 安装 SSH 服务和必要工具
+# 安装 SSH 服务、PostgreSQL 客户端和必要工具
 RUN apt-get update && \
-    apt-get install -y openssh-server sudo bash && \
+    apt-get install -y openssh-server sudo bash curl wget postgresql-client-16 && \
     mkdir /var/run/sshd
 
 # 设置 root 密码为 root（测试用）

@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  ubuntu-ssh:
+    build: .
+    container_name: ubuntu-ssh-server
+    ports:
+      - "2222:22"
+    environment:
+      - SSH_ROOT_PASSWORD=root
+    depends_on:
+      - postgres
+    networks:
+      - dev-network
+    volumes:
+      - ssh-data:/root
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: postgres-17
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-devdb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    networks:
+      - dev-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-devdb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  dev-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
+  ssh-data:
+    driver: local
