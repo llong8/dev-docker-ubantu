@@ -27,6 +27,13 @@ ENV PATH="${NVM_DIR}:${PATH}"
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # ---------------------------------------------------------------------------
+# 添加 PostgreSQL 官方仓库（获取最新版客户端）
+# ---------------------------------------------------------------------------
+RUN apt-get update && apt-get install -y curl ca-certificates gnupg && \
+    curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/postgresql-keyring.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/postgresql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+
+# ---------------------------------------------------------------------------
 # 安装基础软件包
 # ---------------------------------------------------------------------------
 RUN apt-get update && apt-get install -y \
@@ -34,11 +41,10 @@ RUN apt-get update && apt-get install -y \
     openssh-server \
     # 版本控制
     git \
-    # PostgreSQL 客户端
-    postgresql-client-16 \
+    # PostgreSQL 客户端 17（与服务端版本匹配）
+    postgresql-client-17 \
     # 常用工具
     sudo \
-    curl \
     wget \
     vim \
     htop \
@@ -46,12 +52,25 @@ RUN apt-get update && apt-get install -y \
     jq \
     zip \
     unzip \
-    ca-certificates \
+    # Claude Code CLI 增强工具
+    ripgrep \
+    fd-find \
+    bat \
+    fzf \
+    # 网络调试工具
+    lsof \
+    iproute2 \
     # 构建工具（某些 npm 包需要）
     build-essential \
     # 清理 apt 缓存
     && rm -rf /var/lib/apt/lists/* \
     && mkdir /var/run/sshd
+
+# ---------------------------------------------------------------------------
+# 创建命令别名（Ubuntu 包名与标准命令名不同，Claude Code 需要标准命令名）
+# ---------------------------------------------------------------------------
+RUN ln -s $(which fdfind) /usr/local/bin/fd && \
+    ln -s $(which batcat) /usr/local/bin/bat
 
 # ---------------------------------------------------------------------------
 # 安装 nvm

@@ -88,10 +88,16 @@ docker compose down -v
 
 - nvm v0.40.2
 - git
-- PostgreSQL 客户端 16
+- PostgreSQL 客户端 17
 - vim, htop, tree, jq
 - zip, unzip
 - build-essential
+- ripgrep (rg) - 快速文本搜索
+- fd - 快速文件查找
+- bat - 语法高亮查看文件
+- fzf - 模糊搜索
+- lsof - 查看端口占用
+- ss - 网络连接状态
 
 ## 配置文件
 
