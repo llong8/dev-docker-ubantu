@@ -1,11 +1,9 @@
--- 初始化数据库脚本
+-- =============================================================================
+-- PostgreSQL 初始化脚本
+-- =============================================================================
 -- 这个文件会在 PostgreSQL 容器第一次启动时自动执行
-
--- 创建一个示例数据库和表
-CREATE DATABASE IF NOT EXISTS sampledb;
-
--- 切换到示例数据库
-\c sampledb;
+-- 注意: 此脚本在默认数据库 (devdb) 上下文中运行
+-- =============================================================================
 
 -- 创建示例表
 CREATE TABLE IF NOT EXISTS users (
@@ -17,7 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- 插入示例数据
-INSERT INTO users (username, email) VALUES 
+INSERT INTO users (username, email) VALUES
     ('admin', 'admin@example.com'),
     ('user1', 'user1@example.com'),
     ('user2', 'user2@example.com')

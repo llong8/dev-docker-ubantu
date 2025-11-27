@@ -1,31 +1,102 @@
-version: '3.8'
+# =============================================================================
+# Docker 开发环境配置
+# =============================================================================
+#
+# 描述:
+#   提供一个完整的远程开发环境，包含 Ubuntu SSH 服务器和 PostgreSQL 数据库。
+#   通过 SSH 密钥连接到容器内进行开发测试。
+#
+# -----------------------------------------------------------------------------
+# 端口映射规则
+# -----------------------------------------------------------------------------
+#
+#   服务          容器端口        主机端口        说明
+#   ─────────────────────────────────────────────────────────────────────
+#   SSH           22             2222           远程连接入口（密钥认证）
+#   PostgreSQL    5432           5432           数据库服务
+#   开发端口      50000-60000    50000-60000    直接映射，用于各类开发服务
+#
+# -----------------------------------------------------------------------------
+# 快速开始
+# -----------------------------------------------------------------------------
+#
+#   # 1. 构建并启动所有服务
+#   docker compose up -d --build
+#
+#   # 2. SSH 连接到开发环境（使用密钥，无需密码）
+#   ssh root@localhost -p 2222
+#
+#   # 3. 进入容器后安装 Node.js
+#   nvm install 22      # 安装 Node.js 22.x
+#   nvm use 22          # 使用 Node.js 22.x
+#   npm install -g pnpm # 安装 pnpm
+#
+#   # 4. 连接 PostgreSQL 数据库（在容器内）
+#   psql -h postgres -U postgres -d devdb
+#
+#   # 5. 停止服务
+#   docker compose down
+#
+#   # 6. 停止并删除数据卷（清空所有数据）
+#   docker compose down -v
+#
+# -----------------------------------------------------------------------------
+# 配置说明
+# -----------------------------------------------------------------------------
+#
+#   - 数据库配置在 .env 文件中修改
+#   - SSH 公钥在 Dockerfile 中配置
+#   - 初始化 SQL 脚本放在 ./postgres-init/ 目录下
+#   - 时区: Asia/Shanghai
+#
+# =============================================================================
 
 services:
-  ubuntu-ssh:
-    build: .
-    container_name: ubuntu-ssh-server
+  # ---------------------------------------------------------------------------
+  # Ubuntu SSH 开发环境
+  # ---------------------------------------------------------------------------
+  # 基于 Ubuntu 24.04，预装:
+  #   - nvm（Node.js 版本管理器）
+  #   - git
+  #   - PostgreSQL 客户端
+  #   - 常用 CLI 工具（vim, htop, tree, jq, zip/unzip）
+  #   - build-essential（编译工具）
+  #
+  # SSH 认证: 仅支持密钥登录，密码登录已禁用
+  ubuntu-dev:
+    build: .                          # 使用当前目录的 Dockerfile 构建
+    container_name: ubuntu-dev
+    hostname: ubuntu-dev              # 容器内主机名
     ports:
-      - "2222:22"
-    environment:
-      - SSH_ROOT_PASSWORD=root
+      - "2222:22"                     # SSH 端口: 主机 2222 -> 容器 22
+      - "50000-60000:50000-60000"     # 开发端口范围: 直接映射
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy    # 等待 PostgreSQL 健康检查通过后再启动
     networks:
-      - dev-network
+      - dev-network                   # 加入开发网络，可通过 postgres:5432 访问数据库
     volumes:
-      - ssh-data:/root
-    restart: unless-stopped
+      - dev-home:/root                # 持久化 /root（nvm、npm 缓存、bash 历史等）
+      - dev-workspace:/workspace      # 持久化工作目录（代码存放位置）
+    restart: unless-stopped           # 自动重启（除非手动停止）
 
+  # ---------------------------------------------------------------------------
+  # PostgreSQL 数据库服务
+  # ---------------------------------------------------------------------------
+  # PostgreSQL 17 Alpine 版本
+  # 数据库配置通过 .env 文件设置
   postgres:
     image: postgres:17-alpine
     container_name: postgres-17
+    hostname: postgres                # 容器内可通过 postgres:5432 访问
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-devdb}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       PGDATA: /var/lib/postgresql/data/pgdata
+      TZ: Asia/Shanghai               # 时区设置
     ports:
-      - "5432:5432"
+      - "5432:5432"                   # PostgreSQL 端口
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./postgres-init:/docker-entrypoint-initdb.d
@@ -38,12 +109,20 @@ services:
       timeout: 5s
       retries: 5
 
+# -----------------------------------------------------------------------------
+# 网络配置
+# -----------------------------------------------------------------------------
 networks:
   dev-network:
-    driver: bridge
+    driver: bridge                    # 桥接网络，容器间可通过服务名互访
 
+# -----------------------------------------------------------------------------
+# 数据卷配置
+# -----------------------------------------------------------------------------
 volumes:
   postgres-data:
-    driver: local
-  ssh-data:
-    driver: local
+    driver: local                     # PostgreSQL 数据持久化
+  dev-home:
+    driver: local                     # /root 目录持久化（nvm、配置文件等）
+  dev-workspace:
+    driver: local                     # /workspace 目录持久化（代码）

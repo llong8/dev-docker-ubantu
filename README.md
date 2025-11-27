@@ -1,96 +1,118 @@
-# Docker Ubuntu + PostgreSQL 17 开发环境
+# Docker Ubuntu 开发环境
 
-这个项目提供了一个基于 Docker Compose 的开发环境，包含：
-- Ubuntu 24.04 容器（带 SSH 服务）
-- PostgreSQL 17 数据库
+基于 Docker Compose 的远程开发环境，包含：
+- Ubuntu 24.04（SSH 密钥认证）
+- PostgreSQL 17
+- nvm（Node.js 版本管理）
 
 ## 快速开始
 
 ### 1. 启动服务
-```bash
-# 构建并启动所有服务
-docker compose up -d
 
-# 查看服务状态
+```bash
+# 构建并启动
+docker compose up -d --build
+
+# 查看状态
 docker compose ps
-
-# 查看日志
-docker compose logs -f
 ```
 
-### 2. 连接到服务
+### 2. SSH 连接
 
-**SSH 连接到 Ubuntu 容器：**
+**前提**：你的 SSH 公钥已写入 Dockerfile（已配置）
+
 ```bash
-ssh root@localhost -p 2222
-# 密码: root
+ssh root@你的服务器IP -p 2222
 ```
 
-**连接到 PostgreSQL 数据库：**
+**VSCode Remote SSH 配置**（~/.ssh/config）：
+
+```
+Host dev-docker
+    HostName 你的服务器IP
+    Port 2222
+    User root
+```
+
+### 3. 配置 Git
+
+首次使用需配置用户信息：
+
 ```bash
-# 从宿主机连接
+git config --global user.name "你的名字"
+git config --global user.email "你的邮箱"
+```
+
+配置会保存在 `/root/.gitconfig`，由于 `/root` 已持久化，重启容器后配置仍然有效。
+
+### 4. 安装 Node.js
+
+```bash
+nvm install 22        # 安装 Node.js 22
+nvm use 22            # 使用 Node.js 22
+npm install -g pnpm   # 安装 pnpm
+```
+
+### 5. 连接 PostgreSQL
+
+```bash
+# 容器内连接（推荐）
+psql -h postgres -U postgres -d devdb
+
+# 宿主机连接
 psql -h localhost -p 5432 -U postgres -d devdb
-
-# 从 Ubuntu 容器内连接
-docker exec -it ubuntu-ssh-server psql -h postgres -U postgres -d devdb
 ```
 
-### 3. 管理服务
+### 6. 管理服务
+
 ```bash
-# 停止服务
-docker-compose down
+# 停止
+docker compose down
 
-# 重启服务
-docker-compose restart
+# 重启
+docker compose restart
 
-# 删除所有数据（包括数据库数据）
-docker-compose down -v
+# 删除所有数据（包括数据库和工作目录）
+docker compose down -v
 ```
 
-## 服务说明
+## 端口映射
 
-### Ubuntu SSH 服务
-- **端口**: 2222 (SSH)
-- **用户名**: root
-- **密码**: root
-- **预安装软件**: SSH, sudo, bash, curl, wget, postgresql-client
+| 服务 | 容器端口 | 主机端口 |
+|------|----------|----------|
+| SSH | 22 | 2222 |
+| PostgreSQL | 5432 | 5432 |
+| 开发端口 | 50000-60000 | 50000-60000 |
 
-### PostgreSQL 17 数据库
-- **端口**: 5432
-- **数据库**: devdb
-- **用户名**: postgres
-- **密码**: postgres
-- **数据持久化**: 通过 Docker volume
+## 预装软件
+
+- nvm v0.40.2
+- git
+- PostgreSQL 客户端 16
+- vim, htop, tree, jq
+- zip, unzip
+- build-essential
 
 ## 配置文件
 
-- `docker-compose.yml`: 主要的服务编排配置
-- `.env`: 环境变量配置
-- `Dockerfile`: Ubuntu 容器构建配置
-- `postgres-init/`: PostgreSQL 初始化脚本目录
+| 文件 | 说明 |
+|------|------|
+| docker-compose.yml | 服务编排 |
+| Dockerfile | Ubuntu 容器构建 |
+| .env | PostgreSQL 配置 |
+| postgres-init/ | 数据库初始化脚本 |
+| .dockerignore | 构建忽略文件 |
 
-## 自定义配置
+## 数据持久化
 
-### 修改数据库配置
-编辑 `.env` 文件来更改数据库配置：
-```bash
-POSTGRES_DB=your_database_name
-POSTGRES_USER=your_username
-POSTGRES_PASSWORD=your_secure_password
-```
+| 数据卷 | 用途 |
+|--------|------|
+| dev-home | /root（nvm、配置文件、历史记录） |
+| dev-workspace | /workspace（代码目录） |
+| postgres-data | PostgreSQL 数据 |
 
-### 添加初始化脚本
-在 `postgres-init/` 目录中添加 `.sql` 文件，这些文件会在数据库首次启动时自动执行。
+## 安全说明
 
-## 安全提醒
-
-⚠️ **警告**: 此配置仅用于开发环境，不适用于生产环境：
-- SSH root 登录已启用
-- 使用了简单的密码
-- 数据库密码未加密
-
-在生产环境中请：
-- 禁用 root SSH 登录
-- 使用强密码
-- 配置防火墙规则
-- 使用加密的环境变量
+- SSH 仅支持密钥认证，密码登录已禁用
+- 更换 SSH 密钥需修改 Dockerfile 并重新构建
+- 数据库密码在 .env 文件中配置
