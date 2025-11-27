@@ -28,10 +28,11 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # ---------------------------------------------------------------------------
 # 添加 PostgreSQL 官方仓库（获取最新版客户端）
+# Ubuntu 24.04 代号是 noble
 # ---------------------------------------------------------------------------
 RUN apt-get update && apt-get install -y curl ca-certificates gnupg && \
     curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/postgresql-keyring.gpg && \
-    echo "deb [signed-by=/usr/share/keyrings/postgresql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+    echo "deb [signed-by=/usr/share/keyrings/postgresql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt noble-pgdg main" > /etc/apt/sources.list.d/pgdg.list
 
 # ---------------------------------------------------------------------------
 # 安装基础软件包
