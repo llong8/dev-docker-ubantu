@@ -117,6 +117,115 @@ docker compose down -v
 | dev-workspace | /workspace（代码目录） |
 | postgres-data | PostgreSQL 数据 |
 
+## 离线部署（本地打包上传）
+
+如果目标服务器无法访问外网，可以在本地构建镜像后上传。
+
+### 1. 本地构建镜像
+
+```bash
+cd docker-unbantu
+
+# 构建镜像
+docker build -t ubuntu-dev:latest .
+```
+
+### 2. 导出为 tar 文件
+
+```bash
+# 导出镜像
+docker save -o ubuntu-dev.tar ubuntu-dev:latest
+
+# 查看文件大小
+ls -lh ubuntu-dev.tar
+```
+
+### 3. 上传到服务器
+
+```bash
+# 在服务器上创建项目目录
+ssh user@服务器IP "mkdir -p ~/docker-unbantu"
+
+# 上传镜像文件
+scp ubuntu-dev.tar user@服务器IP:~/docker-unbantu/
+
+# 上传配置文件（docker-compose.yml、.env、postgres-init 目录）
+scp docker-compose.yml .env user@服务器IP:~/docker-unbantu/
+scp -r postgres-init user@服务器IP:~/docker-unbantu/
+
+# 或使用 rsync 一次性上传整个目录（推荐，支持断点续传）
+rsync -avP . user@服务器IP:~/docker-unbantu/
+```
+
+服务器上的目录结构：
+```
+~/docker-unbantu/
+├── ubuntu-dev.tar       # 镜像文件（导入后可删除）
+├── docker-compose.yml   # 服务编排配置
+├── .env                 # 数据库密码等环境变量
+└── postgres-init/       # 数据库初始化脚本
+```
+
+### 4. 服务器导入镜像
+
+```bash
+# SSH 到服务器
+ssh user@服务器IP
+
+# 导入镜像
+docker load -i ubuntu-dev.tar
+
+# 验证
+docker images | grep ubuntu-dev
+```
+
+### 5. 修改 docker-compose.yml
+
+服务器上不需要重新构建，直接使用导入的镜像：
+
+```yaml
+ubuntu-dev:
+  image: ubuntu-dev:latest    # 使用导入的镜像
+  # build: .                  # 注释掉
+  container_name: ubuntu-dev
+  ...
+```
+
+### 6. 启动服务
+
+```bash
+docker compose up -d
+```
+
+### 完整流程
+
+```
+本地电脑                              服务器
+────────                              ──────
+docker build -t ubuntu-dev .
+        ↓
+docker save -o ubuntu-dev.tar
+        ↓
+    scp 上传  ──────────────────→  ubuntu-dev.tar
+                                        ↓
+                                  docker load -i ubuntu-dev.tar
+                                        ↓
+                                  docker compose up -d
+```
+
+### 注意事项
+
+- 镜像文件较大（可能 500MB-1GB），上传需要时间
+- 压缩传输可以加快速度：
+
+```bash
+# 导出时直接压缩
+docker save ubuntu-dev:latest | gzip > ubuntu-dev.tar.gz
+
+# 服务器导入
+gunzip -c ubuntu-dev.tar.gz | docker load
+```
+
 ## 安全说明
 
 - SSH 仅支持密钥认证，密码登录已禁用
