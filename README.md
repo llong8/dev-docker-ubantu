@@ -45,6 +45,34 @@ git config --global user.email "你的邮箱"
 
 配置会保存在 `/root/.gitconfig`，由于 `/root` 已持久化，重启容器后配置仍然有效。
 
+
+在容器内配置 GitHub SSH：
+1. 生成 SSH 密钥
+ssh-keygen -t ed25519 -C "你的邮箱@example.com"
+一路回车（或设置密码）。
+
+2. 查看公钥
+cat ~/.ssh/id_ed25519.pub
+
+3. 添加到 GitHub
+复制上面输出的公钥内容
+打开 https://github.com/settings/keys
+点击 New SSH key
+Title 填：Docker Dev（随意）
+Key 粘贴公钥内容
+点击 Add SSH key
+
+4. 测试连接
+ssh -T git@github.com
+首次连接输入 yes，成功会显示：
+Hi 用户名! You've successfully authenticated...
+
+5. 配置 Git 用户信息
+git config --global user.name "你的名字"
+git config --global user.email "你的邮箱@example.com"
+现在可以克隆私有仓库了：
+git clone git@github.com:用户名/仓库名.git
+
 ### 4. 安装 Node.js
 
 ```bash
