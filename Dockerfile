@@ -103,7 +103,7 @@ RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin prohibit-passwo
 RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh
 
 # 你的 SSH 公钥
-RUN echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDjJXGqNxDpl5G3SZ+fQsjRu3Ibsta+2uphbPlsTc4+IedMAeiUSx1pIFo194cFcNtALZoxRa6WcqlWMhvwn1I49nQtHN1Nxevq6xuRl5SLxZS/gCUFg3h1HhiMXwZb0Q1jfJ9KedHcBxqt/YSu1PMNgQN5NH5qDhUa6F6wa0J3w7PEDt3uk5YhmXBEVu/40k5t7FO6G6pdM6oP0nnNJl5pN/eOt2WzGUAm3lvGIHt5DgcIUUagB3KD/E8Ekw4UEIg1GfaGBnP8QTFwpzJ8BisUjgKnojVNGpBLZg634GnE1NEBjXpIygPIM+SW5VtpNy+9D/GvF8SFC3lLeFnlB5JnPDqYXh6LEnasHBzY7Y6Z5og2evjcDla6frToZ0GNBdcS3M1zUKJj9pwN/TkO2/YjAeYjEGVXCZxiN5bWKjjXKazvEwcD9qamAiu/gV2SkSCNfOaYZ8EK8gj87IFvNalQ3TTJydkpIfrtVGWXuyOFjCstpc37C9idqh4MZdMWBPQEAfSgDjhNdzIYy+xTobEr3nEwEv4RfhhTWtyYtsR6wGfVXRrS2YLYGgI2FLTppsImXF/nuzk4sTDR7LRIaX6ggM9NVKAXw/eEYOAtliiGLYnt5GRYM1Uge33xS50qaQlEH7CTZ4PSKuUqTr6fs+0s1dM3XyHYmqU8w9TGiyTziw== xiaol@DESKTOP-1VMSP36' > /root/.ssh/authorized_keys
+RUN echo 'ssh-rsa ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH+HxhrLkG3LB4IqlCOwpbSRsLcHXInr/mqaQXyuwgVz 1091852800@qq.com' > /root/.ssh/authorized_keys
 
 RUN chmod 600 /root/.ssh/authorized_keys
 
